@@ -11,7 +11,7 @@ __version__ = "0.01"
 
 
 class Sudoku(object):
-    alg_list=("find unique", "hidden singlet")
+    alg_list=("find unique", "hidden singlet", "conjugate pair")
     def __init__(self, start_num):
         self.start_num=start_num #9x9 array storing the initially known numbers 0=unknown
         self.solved_num=copy.deepcopy(start_num) # 9x9 matrix storing the identified (solved) numbers
@@ -25,36 +25,59 @@ class Sudoku(object):
                         if k+1 != start_num[i,j]: self.opt_num[i,j,k]=False
 
     @classmethod
-    def get_index(cls, n, k,what="row", elem=0):
-        if what=="column":
+    def get_index(cls, n, k,unit="row", elem=0):
+        if unit=="column":
             i=n; j=k
-        elif what =="row":
+        elif unit =="row":
             i=k; j=n
-        elif what == "box":
+        elif unit == "box":
             i= (n * 3 ) % 9 + k % 3
             j= (n // 3) * 3 + k // 3
             #print ("index of box {}, {}th field: {},{}".format(n,k,i,j))
         else:
-            raise ValueError('index not found for '+what)
+            raise ValueError('index not found for '+unit)
         if elem == 0:
             return (i,j)
         else:
             return (i,j,elem)
 
     @classmethod
-    def get_set(cls, idx, what="row"):
-        if what=="row":
+    def get_set(cls, idx, unit="row"):
+        if unit=="row":
             n=idx[0]
-        elif what =="column":
+        elif unit =="column":
             n=idx[1]
-        elif what == "box":
+        elif unit == "box":
             n=(idx[0] // 3) * 3 + idx[1] // 3
             #print("box at {},{}: {}".format(idx[0],idx[1],n))
         else:
-            raise ValueError('index not found for '+what)
+            raise ValueError('index not found for '+unit)
         return n
      
-
+    def get_unit(self, n,unit="row"):
+        if unit=="row":
+            return self.solved_num[...,n]
+        elif unit =="column":
+            return self.solved_num[n,...]
+        elif unit == "box":
+            i= (n * 3 ) % 9
+            j= (n // 3) * 3
+            return(np.transpose(self.solved_num[i:(i+3),j:(j+3)]).reshape(9))
+        else:
+            raise ValueError('index not found for '+unit)
+    
+    def get_unit_opt(self, n,unit="row"):
+        if unit=="row":
+            return self.opt_num[:9,n:n+1,:9]
+        elif unit =="column":
+            return self.opt_num[n:n+1,:9,:9]
+        elif unit == "box":
+            i= (n * 3 ) % 9
+            j= (n // 3) * 3
+            return(self.opt_num[i:(i+3),j:(j+3),:9].reshape(9,9)) #order is not right here
+        else:
+            raise ValueError('index not found for '+unit) 
+        
     def update_options(self):
         #for each solved number, check rows, cols and boxes and remove corresponding value from number
         print("update options in function")
@@ -106,13 +129,13 @@ class Sudoku(object):
                 nopt=np.zeros(9, dtype=int) 
                 seen_at=np.empty(9, dtype=int)
                 for k in range(9): #field within ith row, col, box
-                    idx=self.get_index(n,k,what=t)
+                    idx=self.get_index(n,k,unit=t)
                     if self.solved_num[idx]!=0: solved[self.solved_num[idx]-1]=True
                     nopt[self.opt_num[idx]] += 1
                     seen_at[self.opt_num[idx]] = k
                 for num in range(9):
                     if not solved[num] and nopt[num] == 1:
-                        idx=self.get_index(n,seen_at[num],what=t)
+                        idx=self.get_index(n,seen_at[num],unit=t)
                         print(str(num+1) + " has only one option in "+t+" "+str(n+1)+" at " + str(seen_at[num]+1)+" "+str(idx))
                         solved_count+=1
                         self.solved_num[idx]=num+1
@@ -121,8 +144,52 @@ class Sudoku(object):
         print("hidden singlets solved {} fileds".format(solved_count)) 
         return solved_count
 
-    #add more fancy algorithms
+    def conjugate_pair(self):
+        opt_count=0
+        for t in ("row", "column", "box"):
+            for n in range(9): #iterate over all rows, cols and boxes
+                #idx=self.get_index(np.full(9,n, dtype=int),np.array(range(9)),unit=t)
+                #unsolved=np.where(self.get_unit(n,t) == 0 )[0]
+                for k1 in range(8):
+                    idx1=self.get_index(n,k1,unit=t)
+                    if sum(self.opt_num[idx1]) != 2 : continue
+                    for k2 in range(k1+1,9):
+                        idx2=self.get_index(n,k2,unit=t)
+                        if np.all(self.opt_num[idx1]==self.opt_num[idx2]):
+                            print("found conjugate pair in "+t+" {}: {},{}".format(n,k1,k2) )
+                            for k in range(9):
+                                if k != k1 and k != k2:
+                                    idx=self.get_index(n,k,unit=t)
+                                    opt_count+=sum(np.logical_and(self.opt_num[idx1], self.opt_num[idx]))
+                                    self.opt_num[idx][self.opt_num[idx1]]=False
+        print("conjugate pairs removed {} options".format(opt_count)) 
+        return opt_count
 
+    #add more fancy algorithms
+    def hidden_pair(self):
+        #look for pairs that share two numbers, 
+        #which cannot be found elsewere in the same unit
+        opt_count=0
+        for t in ("row", "column", "box"):
+            for n in range(9): #iterate over all rows, cols and boxes
+                #idx=self.get_index(np.full(9,n, dtype=int),np.array(range(9)),unit=t)
+                #unsolved=np.where(self.get_unit(n,t) == 0 )[0]
+                nopt=np.zeros(9, dtype=int) 
+                for k1 in range(8):
+                    idx1=self.get_index(n,k1,unit=t)
+                    if sum(self.opt_num[idx1]) <= 2 : continue
+                    for k2 in range(k1+1,9):
+                        idx2=self.get_index(n,k2,unit=t)
+                        if np.all(self.opt_num[idx1]==self.opt_num[idx2]):
+                            print("found conjugate pair in "+t+" {}: {},{}".format(n,k1,k2) )
+                            for k in range(9):
+                                if k != k1 and k != k2:
+                                    idx=self.get_index(n,k,unit=t)
+                                    opt_count+=sum(np.logical_and(self.opt_num[idx1], self.opt_num[idx]))
+                                    self.opt_num[idx][self.opt_num[idx1]]=False
+
+        print("hidden pairs removed {} options".format(opt_count)) 
+        return opt_count
 
 
 ####################

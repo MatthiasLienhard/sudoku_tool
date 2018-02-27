@@ -49,6 +49,8 @@ class Sudoku_gui(object):
             self.sudoku.find_unique_option()
         elif self.sb_alg.get() == "hidden singlet":
             self.sudoku.hidden_singlet()
+        elif self.sb_alg.get() == "conjugate pair":
+            self.sudoku.conjugate_pair()
         else:
             print("this algorithm needs to be defined first")
         self.draw_sudoku(new=True)       
