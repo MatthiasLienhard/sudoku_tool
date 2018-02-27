@@ -12,6 +12,7 @@ __version__ = "0.01"
 
 
 class Sudoku(object):
+    alg_list=("find unique", "find last")
     def __init__(self, start_num):
         self.start_num=start_num #9x9 array storing the initially known numbers 0=unknown
         self.solved_num=copy.deepcopy(start_num) # 9x9 matrix storing the identified (solved) numbers
@@ -74,6 +75,7 @@ class Sudoku(object):
             nopt=np.full((3,9),fill_value=9, dtype=int) 
             firstk=np.empty((3,9), dtype=int)
             for k in range(9): #field within ith row, col, box
+                #row
                 if self.solved_num[i][k]!=0: unsolved[0][k]=False
                 else: nopt[0][self.opt_num[i][k]] += 1
                     

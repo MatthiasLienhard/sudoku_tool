@@ -3,7 +3,7 @@ from sudoku_functions import *
 
 
 class Sudoku_gui(object):
-    alg_list=("find unique", "find last")
+    
     def __init__(self,sudoku, w=tk.Tk()):
         self.sudoku=sudoku #contains the numbers to be displayed
         self.w=w #the main window
@@ -40,10 +40,10 @@ class Sudoku_gui(object):
         self.bt_applyAlg=tk.Button(w,text="apply solving step", 
                     command=self.solve_step )
         self.bt_applyAlg.pack()
-        self.sb_alg=tk.Spinbox(w, values=Sudoku_gui.algList)
+        self.sb_alg=tk.Spinbox(w, values=self.sudoku.alg_list)
         self.sb_alg.pack()
 
-    def solve_step(self)  
+    def solve_step(self):  
         self.sudoku.update_options()  
         if self.sb_alg.get() == "find unique":
             self.sudoku.find_unique_option()
