@@ -47,11 +47,11 @@ class Sudoku_gui(object):
         self.sudoku.update_options()  
         if self.sb_alg.get() == "find unique":
             self.sudoku.find_unique_option()
-        elif self.sb_alg.get() == "find last":
-            self.sudoku.find_last_option()
+        elif self.sb_alg.get() == "hidden singlet":
+            self.sudoku.hidden_singlet()
         else:
             print("this algorithm needs to be defined first")
-            
+        self.draw_sudoku(new=True)       
 
     def new_sudoku(self,start_num=empty_sudoku):
         self.sudoku=Sudoku(start_num)
@@ -64,18 +64,19 @@ class Sudoku_gui(object):
 
     def draw_number(self, i,j ):
         c=self.c
-        o_num=self.sudoku.opt_num[i][j]
-        s_num=self.sudoku.start_num[i][j]
+        o_num=self.sudoku.opt_num[i,j]
+        s_num=self.sudoku.start_num[i,j]
+        f_num=self.sudoku.solved_num[i,j]
         h_step=c.winfo_width()/9
         v_step=c.winfo_height()/9
         x_pos=v_step*(i+.5)
         y_pos=h_step*(j+.5)
         big_font=("Helvetica",32)
         small_font=("Helvetica",12)
-        if s_num == 0: #not defined
-            if sum(o_num) == 1: # already found -> draw green number
+        if s_num == 0: #not defined at start
+            if f_num != 0: # already found -> draw green number
                 #print("draw green {} at {},{}".fromat(o_num[0],i,j))
-                c.create_text(x_pos, y_pos,text=str(o_num[0]),fill='green',font=big_font )
+                c.create_text(x_pos, y_pos,text=str(f_num),fill='green',font=big_font )
             elif sum(o_num) == 0: #contradiction -> draw red X
                 #print("found contradiction at {},{}".format(i,j))
                 c.create_text(x_pos, y_pos,text='X',fill='red',font=big_font )
