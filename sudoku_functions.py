@@ -4,7 +4,6 @@ import copy
 
 ##########
 # Sudoku #
-# 
 ##########
 __author__ = "Matthias Lienhard"
 __email__ = "mali270484@gmail.com"
@@ -35,12 +34,12 @@ class Sudoku(object):
                 if self.solved_num[i][j] != 0: # found solved number
                     n_idx=self.solved_num[i][j]-1 #corresponding index in bool arrays of opt_num
                     #upper left field of box                    
-                    bx_of=(i/3)*3#math.floor(i/3)*3 
-                    by_of=(j/3)*3#math.floor(j/3)*3
+                    bx_of=(i//3)*3#math.floor(i/3)*3 
+                    by_of=(j//3)*3#math.floor(j/3)*3
                     for k in range(9): #iterate over row, col and box
                         #indices for kth field of box
                         bx = bx_of + (k % 3) #floor(k / 3)
-                        by = by_of + (k / 3)
+                        by = by_of + (k // 3)
                         if k != j and self.opt_num[i][k][n_idx]: 
                             #kth element of column
                             self.opt_num[i][k][n_idx]=False
@@ -73,12 +72,19 @@ class Sudoku(object):
         for i in range(9): #iterate over all rows, cols and boxes
             unsolved=np.ones((3,9), dtype=bool)
             nopt=np.full((3,9),fill_value=9, dtype=int) 
-            firstk=np.empty((3,9), dtype=int)
+            seen_at=np.empty((3,9), dtype=int)
             for k in range(9): #field within ith row, col, box
                 #row
                 if self.solved_num[i][k]!=0: unsolved[0][k]=False
-                else: nopt[0][self.opt_num[i][k]] += 1
-                    
+                else: 
+                    nopt[0][self.opt_num[i][k]] += 1
+                    seen_at[0][self.opt_num[i][k]] = k
+            for n in np.where(unsoved[0]):
+                if nopt[0][n]==1:
+                    solved_count+=1
+                    self.solved_num[i,seen_at[0]]
+                
+                
         return solved_count
     #add more fancy algorithms
 
