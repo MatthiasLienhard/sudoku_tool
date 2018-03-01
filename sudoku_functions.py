@@ -12,7 +12,15 @@ __version__ = "0.01"
 
 class Sudoku(object):
     alg_list=("find unique", "hidden singlet", "conjugate pair")
+    empty_sudoku = np.zeros((9,9), dtype=int)
+    easy_sudoku = np.array([[0,0,0,0,0,4,0,2,8],[4,0,6,0,0,0,0,0,5],[1,0,0,0,3,0,6,0,0],[0,0,0,3,0,1,0,0,0],[0,8,7,0,0,0,1,4,0],[0,0,0,7,0,9,0,0,0],[0,0,2,0,1,0,0,0,3],[9,0,0,0,0,0,5,0,7],[6,7,0,4,0,0,0,0,0]])
+    hardest_sudoku = np.array([[1,0,0,0,0,7,0,9,0],[0,3,0,0,2,0,0,0,8],[0,0,9,6,0,0,5,0,0],[0,0,5,3,0,0,9,0,0],[0,1,0,0,8,0,0,0,2],[6,0,0,0,0,4,0,0,0],[3,0,0,0,0,0,0,1,0],[0,4,0,0,0,0,0,0,7],[0,0,7,0,0,0,3,0,0]])
+
+    sudoku_start_num=(empty_sudoku, easy_sudoku, hardest_sudoku)
+    sudoku_start_name=("empty", "easy", "hardest")
+
     def __init__(self, start_num):
+        print(start_num)
         self.start_num=start_num #9x9 array storing the initially known numbers 0=unknown
         self.solved_num=copy.deepcopy(start_num) # 9x9 matrix storing the identified (solved) numbers
         #initialized as start_num, deepcopy to copy also the inner lists
@@ -190,18 +198,5 @@ class Sudoku(object):
 
         print("hidden pairs removed {} options".format(opt_count)) 
         return opt_count
-
-
-####################
-#predefined sudokus#
-####################
-#empty_sudoku to test
-empty_sudoku = np.zeros((9,9), dtype=int)
-empty_sudoku[4,1]=8
-empty_sudoku[0,8]=8
-#easy sudoku
-easy_sudoku = np.array([[0,0,0,0,0,4,0,2,8],[4,0,6,0,0,0,0,0,5],[1,0,0,0,3,0,6,0,0],[0,0,0,3,0,1,0,0,0],[0,8,7,0,0,0,1,4,0],[0,0,0,7,0,9,0,0,0],[0,0,2,0,1,0,0,0,3],[9,0,0,0,0,0,5,0,7],[6,7,0,4,0,0,0,0,0]])
-#another sudoku
-
 
 

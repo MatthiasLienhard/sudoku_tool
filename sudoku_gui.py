@@ -1,6 +1,6 @@
 import Tkinter as tk
+import functools 
 from sudoku_functions import *
-
 
 class Sudoku_gui(object):
     
@@ -9,21 +9,11 @@ class Sudoku_gui(object):
         self.w=w #the main window
         self.w.title("Sudoku tools v 0.1")
         self.w.geometry("1000x1000")
-        # top menue (just for testing, not really populated)
-        menubar = tk.Menu(self.w)
-        men1 = tk.Menu(menubar, tearoff=0)
-        men1.add_command(label="New", command=self.new_sudoku)
-        #men1.add_command(label="Open", command=self.open_from_file)
-        #men1.add_command(label="Save", command=self.save_current)
-        men1.add_command(label="check options", command=self.update_options)
-        men1.add_command(label="redraw", command=lambda: self.draw_sudoku(new=True))
-        men1.add_separator()
-        men1.add_command(label="Exit", command=self.w.quit)
-        menubar.add_cascade(label="Puzzle", menu=men1)
-        w.config(menu=menubar)
-        #not sure when i need to call this
-        self.w.update_idletasks()  
+        self.designmode=True
+        self.show_opt=tk.BooleanVar()
 
+        menu=Sudoku_gui_menu(self)
+        
         #c=canvas (area where the sudoku is drawn
         c_width = w.winfo_width()*.9
         c_height = w.winfo_height()*.9
@@ -41,7 +31,12 @@ class Sudoku_gui(object):
                     command=self.solve_step )
         self.bt_applyAlg.pack()
         self.sb_alg=tk.Spinbox(w, values=self.sudoku.alg_list)
-        self.sb_alg.pack()
+        self.sb_alg.pack()  
+        #self.ck_mode = tk.Checkbutton(self.w, text="design mode", variable=self.designmode)
+        #self.ck_mode.pack()
+        self.ck_show_opt = tk.Checkbutton(self.w, text="show options", 
+                    variable=self.show_opt, command=self.ck_show_opt)        
+        self.ck_show_opt.pack()  
 
     def solve_step(self):  
         self.sudoku.update_options()  
@@ -55,7 +50,12 @@ class Sudoku_gui(object):
             print("this algorithm needs to be defined first")
         self.draw_sudoku(new=True)       
 
-    def new_sudoku(self,start_num=empty_sudoku):
+    def restart(self):
+        self.sudoku=Sudoku(self.sudoku.start_num)
+        self.draw_sudoku(new=True)   
+
+
+    def new_sudoku(self,start_num=Sudoku.empty_sudoku):
         self.sudoku=Sudoku(start_num)
         self.draw_sudoku(new=True)   
      
@@ -63,6 +63,12 @@ class Sudoku_gui(object):
         print("update options")
         self.sudoku.update_options()
         self.draw_sudoku(new=True)
+
+    def ck_show_opt(self):
+        print ("show options is " + str(self.show_opt.get()))
+        self.draw_sudoku(new=True)       
+       
+
 
     def draw_number(self, i,j ):
         c=self.c
@@ -82,7 +88,7 @@ class Sudoku_gui(object):
             elif sum(o_num) == 0: #contradiction -> draw red X
                 #print("found contradiction at {},{}".format(i,j))
                 c.create_text(x_pos, y_pos,text='X',fill='red',font=big_font )
-            else:    
+            elif self.show_opt.get():    
                 #draw all options
                 #print("found options at {},{}: ".format(i,j) + ",".join(str(x) for x in o_num))
                 y_pos+=h_step*.4
@@ -116,4 +122,53 @@ class Sudoku_gui(object):
         for i in range(9):
             for j in range(9):
                 self.draw_number(i,j)
+    def set_design_mode(self):
+        if not self.designmode:
+            print("now in design mode")
+            self.designmode=True
+            self.sudoku=Sudoku(self.sudoku.start_num)
+            self.draw_sudoku(new=True)  
+        else:
+            print("already in design mode")
+
+
+    def set_solve_mode(self):
+        print("now in solve mode")
+        self.designmode=False
+
+
+
+class Sudoku_gui_menu(object):
+
+    def __init__(self,gui):
+        # top menue (just for testing, not really populated)
+        menubar = tk.Menu(gui.w)
+        puzzle_men = tk.Menu(menubar, tearoff=0)
+        new_men=tk.Menu(menubar, tearoff=0)
+        mode_men=tk.Menu(menubar, tearoff=0)
+
+        for i in range(len(gui.sudoku.sudoku_start_num)):
+            new_men.add_command(label=Sudoku.sudoku_start_name[i], 
+                    #command=lambda: gui.new_sudoku(Sudoku.sudoku_start_num[i]) )
+                    command=functools.partial(gui.new_sudoku, Sudoku.sudoku_start_num[i]) )
+        mode_men.add_command(label="design", command=gui.set_design_mode)
+        mode_men.add_command(label="solve", command=gui.set_solve_mode)
+            
+        #men1.add_command(label="Open", command=self.open_from_file)
+        #men1.add_command(label="Save", command=self.save_current)
+        #puzzle_men.add_command(label="check options", command=self.update_options)
+        #puzzle_men.add_command(label="redraw", command=lambda: self.draw_sudoku(new=True))
+        puzzle_men.add_command(label="Clear", command=gui.restart)
+        puzzle_men.add_cascade(label="New", menu=new_men)
+        puzzle_men.add_cascade(label="Mode", menu=mode_men)
+        puzzle_men.add_separator()
+        puzzle_men.add_command(label="Exit", command=gui.w.quit)
+        menubar.add_cascade(label="Puzzle", menu=puzzle_men)
+
+
+        gui.w.config(menu=menubar)
+        #not sure when i need to call this
+        gui.w.update_idletasks()  
+
+
 
